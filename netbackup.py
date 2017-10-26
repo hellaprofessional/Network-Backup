@@ -1,7 +1,7 @@
 #!/usr/bin/python3.6 -B
 import datetime
 from netmiko import ConnectHandler
-from devices import allthethings 
+from devices import allthethings, novlan, vlan 
 from pathlib import Path
 
 # Imports above provide the following functions:
@@ -21,8 +21,36 @@ now = datetime.datetime.now()
 # 5) Get's robot-beer for job well done
 #
 
-for things in allthethings:
-	try: 
+
+#
+# Process Things that only need a show run.
+#
+for things in novlan:
+	try:
+		net_connect = ConnectHandler(**things)
+		output = net_connect.send_command('show run | inc hostname')
+		hostname = output[9:]
+		output = net_connect.send_command('show run')
+		filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
+		if filecheck.exists():
+			saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
+		else:
+			saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"), "w")
+
+		saveoutput.write(output)
+		saveoutput.close
+	except:
+		print("Skipping " + things['ip'] + " something happened")
+	else:
+		print("backed up  " + things['ip'] + " successfully!")
+
+#
+# Process Cisco Switches.
+#
+
+
+for things in vlan:
+	try:
 		net_connect = ConnectHandler(**things)
 		output = net_connect.send_command('show run | inc hostname')
 		hostname = output[9:]
@@ -33,10 +61,12 @@ for things in allthethings:
 			saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
 		else:
 			saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"), "w")
-	
+
 		saveoutput.write(output)
 		saveoutput.write("\n--------\n")
 		saveoutput.write(vlan)
 		saveoutput.close
 	except:
-		print("Skipping " + things['ip'] + " couldn't connect")
+		print("Skipping " + things['ip'] + " something happened")
+	else:
+		print("backed up " + things['ip'] + " successfully!")
