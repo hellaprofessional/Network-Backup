@@ -11,6 +11,14 @@ from pathlib import Path
 # This gives us a timestamp we will need for our filenames
 now = datetime.datetime.now()
 
+# Dir check
+dircheck = Path('backupfiles/')
+if dircheck.is_dir():
+	print("placing files in ./backupfiles")
+else:
+	print("./backupfiles does not exist, creating...")
+	Path('backupfiles/').mkdir(parents=True, exist_ok=True)
+
 #
 # Cycles through all the devices stored in devices.py
 # Then does the following: 
