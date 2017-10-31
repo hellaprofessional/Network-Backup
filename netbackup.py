@@ -1,5 +1,6 @@
 #!/usr/bin/python3.6 -B
 import datetime
+import re
 from netmiko.ssh_exception import NetMikoAuthenticationException, NetMikoAuthenticationException
 from netmiko import ConnectHandler
 from devices import allthethings, vlan, novlan 
@@ -81,6 +82,46 @@ def ciscoSwitch(stuff):
 			saveoutput.close
 			print("backed up " + things['ip'] + " successfully!")
 
+
+#
+# This is similar to ciscoSwitch except that it formats vlan info as a script
+# This way pasting the script into a switch will also restore vlan names and descriptions
+# Mostly complete, I just need to make some edits to remove the "building configuration..."
+# and "Current configuration :" lines from the resulting file so copy / pasting the file into 
+# a switch doesn't cause errors
+#
+
+def inlineCSwitch(stuff):
+	for things in stuff: 
+		try:
+			net_connect = ConnectHandler(**things)
+		except:
+			#raise  #for debugging this part. 
+			print("Skipping " + things['ip'] + " something happened")
+		else:
+			vlanSplice = re.compile(r'^\d+\s+\S+\s+active', re.MULTILINE)
+			output = net_connect.send_command('show run view full | inc hostname')
+			hostname = output[9:]
+			output = net_connect.send_command('show run view full')
+			vlan = net_connect.send_command('show vlan')
+			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
+			if filecheck.exists():
+				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
+			else:
+				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"), "w")
+			vlanStore = vlanSplice.findall(vlan)
+			for item in vlanStore:
+				numberName = item.split()
+				saveoutput.write("!\nvlan " + numberName[0] + "\n name " + numberName[1] + "\n")
+			saveoutput.write("\n--------\n")
+			saveoutput.write(output)
+			saveoutput.close
+			print("backed up " + things['ip'] + " successfully!")
+
+
+#  you can comment out either inlineCSwitch or ciscoSwitch depending on which output you want. 
+
 ciscoRun(novlan)
-ciscoSwitch(vlan)
+inlineCSwitch(vlan)
+#ciscoSwitch(vlan)
 
