@@ -41,9 +41,9 @@ def ciscoRun(stuff):
 		except:
 			print("Skipping " + things['ip'] + " something happened")
 		else:
-			output = net_connect.send_command('show run | inc hostname')
+			output = net_connect.send_command('show run view full | inc hostname')
 			hostname = output[9:]
-			output = net_connect.send_command('show run')
+			output = net_connect.send_command('show run view full')
 			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
 			if filecheck.exists():
 				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
@@ -52,7 +52,7 @@ def ciscoRun(stuff):
 	
 			saveoutput.write(output)
 			saveoutput.close
-			print("backed up  " + things['ip'] + " successfully!")
+			print("backed up " + things['ip'] + " successfully!")
 
 
 #
@@ -66,9 +66,9 @@ def ciscoSwitch(stuff):
 		except:
 			print("Skipping " + things['ip'] + " something happened")
 		else:
-			output = net_connect.send_command('show run | inc hostname')
+			output = net_connect.send_command('show run view full | inc hostname')
 			hostname = output[9:]
-			output = net_connect.send_command('show run')
+			output = net_connect.send_command('show run view full')
 			vlan = net_connect.send_command('show vlan')
 			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
 			if filecheck.exists():
