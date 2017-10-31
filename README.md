@@ -10,7 +10,9 @@ Things on my to do list:
 
 1) Since a "show run" on a cisco switch doesn't actually show the vlan database configuration, I have the script run a "show vlan" instead so that one could manually input vlan info if necessary.  However I'd like to format the show vlan output into a script that creates said vlan's into a script to easily input back into a switch if say, you brought in a new switch that had no vlan info. 
 
-2) Obscuring or Encrypting passwords.  Right now the passwords are in plain text, at best I can obscure it with base64 or something, but that sounds really really bad.  The problem with creating a restricted account account on the switch is that at least for cisco, show running-config will only show config commands you have access to, which means you'll either have a really small backup file, or you'll have an account that isn't really that limited.  ( Perhaps a level that would be allowed configuration access, but not allowed to write to any of the configuration files.   The user would still be able to mess things up, most of the potential damage would be negated by a reload.  ) 
+2) Obscuring or Encrypting passwords.  Right now the passwords are in plain text, at best I can obscure it with base64 or something, but that sounds really really bad. In the meantime, for Cisco users, you should issue something like "privilege exec level 3 show running-config view full" ( and show vlan for switches ) and create a backupuser with that level. 
+
+Past IOS 15.2 there's apparently an issue with simply allowing "show running-config view full" This post describes a workaround for those users. http://commandline.ninja/2016/05/30/rancid-and-ios-15-2-blank-config-and-how-to-work-around-newer-file-privileges/
 
 3) Multi-Vendor Support.  I plan to support as many devices as I can get my hands on.   I should have access to an EX4200 stack soon, but in the meantime it's probably going to have to be testing from an Olive. 
 
