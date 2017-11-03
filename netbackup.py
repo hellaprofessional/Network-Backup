@@ -6,6 +6,12 @@ from netmiko import ConnectHandler
 from devices import allthethings, vlan, novlan 
 from pathlib import Path
 
+# 
+#Currently using the option for placing vlan configuration as a script.  
+#You can change it by commenting out #inlineSwitch and uncommenting ciscoSwitch at the bottom of the script
+#
+
+
 # Imports above provide the following functions:
 # get timestamp, SSH to devices, Import all the devices form file, and check to see if file 
 # that we want to write to exists. 
@@ -100,9 +106,11 @@ def inlineCSwitch(stuff):
 			print("Skipping " + things['ip'] + " something happened")
 		else:
 			vlanSplice = re.compile(r'^\d+\s+\S+\s+active', re.MULTILINE)
+			rmBuilding = re.compile(r'Building configuration...\n\nCurrent configuration.*')
 			output = net_connect.send_command('show run view full | inc hostname')
 			hostname = output[9:]
 			output = net_connect.send_command('show run view full')
+			outClean = rmBuilding.sub('!', output)
 			vlan = net_connect.send_command('show vlan')
 			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
 			if filecheck.exists():
@@ -113,8 +121,7 @@ def inlineCSwitch(stuff):
 			for item in vlanStore:
 				numberName = item.split()
 				saveoutput.write("!\nvlan " + numberName[0] + "\n name " + numberName[1] + "\n")
-			saveoutput.write("\n--------\n")
-			saveoutput.write(output)
+			saveoutput.write(outClean)
 			saveoutput.close
 			print("backed up " + things['ip'] + " successfully!")
 
