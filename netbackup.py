@@ -3,7 +3,7 @@ import datetime
 import re
 from netmiko.ssh_exception import NetMikoAuthenticationException, NetMikoAuthenticationException
 from netmiko import ConnectHandler
-from devices import allthethings, vlan, novlan 
+from devices import asa, vlan, novlan, backupPath 
 from pathlib import Path
 
 # 
@@ -21,12 +21,12 @@ now = datetime.datetime.now()
 
 
 # Dir check
-dircheck = Path('backupfiles/')
+dircheck = Path(backupPath)
 if dircheck.is_dir():
-	print("placing files in ./backupfiles")
+	print("placing files in " + backupPath )
 else:
-	print("./backupfiles does not exist, creating...")
-	Path('backupfiles/').mkdir(parents=True, exist_ok=True)
+	print(backupPath + " does not exist, creating...")
+	Path(backupPath).mkdir(parents=True, exist_ok=True)
 
 #
 # Cycles through all the devices stored in devices.py
@@ -41,6 +41,7 @@ else:
 #
 # Process Things that only need a show run. 
 #
+
 def ciscoRun(stuff):
 	for things in stuff:
 		try: 
@@ -48,19 +49,41 @@ def ciscoRun(stuff):
 		except:
 			print("Skipping " + things['ip'] + " something happened")
 		else:
-			output = net_connect.send_command('show run view full | inc hostname')
+			output = net_connect.send_command('show run view full | inc ^hostname')
 			hostname = output[9:]
 			output = net_connect.send_command('show run view full')
-			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
+			filecheck = Path(backupPath + hostname + "-" + now.strftime("%Y%m%d"))
 			if filecheck.exists():
-				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
 			else:
-				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"), "w")
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d"), "w")
 	
 			saveoutput.write(output)
 			saveoutput.close
 			print("backed up " + things['ip'] + " successfully!")
 
+
+def asaRun(stuff):
+	for things in stuff:
+		try: 
+			net_connect = ConnectHandler(**things)
+		except:
+			print("Skipping " + things['ip'] + " something happened")
+		else:
+			net_connect.enable()
+			output = net_connect.send_command('show run | inc ^hostname')
+			hostname = output[9:]
+			hostname = hostname = hostname.strip('\n') 
+			output = net_connect.send_command('show run')
+			filecheck = Path(backupPath + hostname + "-" + now.strftime("%Y%m%d"))
+			if filecheck.exists():
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
+			else:
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d"), "w")
+	
+			saveoutput.write(output)
+			saveoutput.close
+			print("backed up " + things['ip'] + " successfully!")
 
 #
 # Process Cisco Switches. 
@@ -73,15 +96,15 @@ def ciscoSwitch(stuff):
 		except:
 			print("Skipping " + things['ip'] + " something happened")
 		else:
-			output = net_connect.send_command('show run view full | inc hostname')
+			output = net_connect.send_command('show run view full | inc ^hostname')
 			hostname = output[9:]
 			output = net_connect.send_command('show run view full')
 			vlan = net_connect.send_command('show vlan')
-			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
+			filecheck = Path(backupPath + hostname + "-" + now.strftime("%Y%m%d"))
 			if filecheck.exists():
-				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
 			else:
-				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"), "w")
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d"), "w")
 			saveoutput.write(output)
 			saveoutput.write("\n--------\n")
 			saveoutput.write(vlan)
@@ -107,16 +130,16 @@ def inlineCSwitch(stuff):
 		else:
 			vlanSplice = re.compile(r'^\d+\s+\S+\s+active', re.MULTILINE)
 			rmBuilding = re.compile(r'Building configuration...\n\nCurrent configuration.*')
-			output = net_connect.send_command('show run view full | inc hostname')
+			output = net_connect.send_command('show run view full | inc ^hostname')
 			hostname = output[9:]
 			output = net_connect.send_command('show run view full')
 			outClean = rmBuilding.sub('!', output)
 			vlan = net_connect.send_command('show vlan')
-			filecheck = Path('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"))
+			filecheck = Path(backupPath + hostname + "-" + now.strftime("%Y%m%d"))
 			if filecheck.exists():
-				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d%H%M%S"), "w")
 			else:
-				saveoutput = open('backupfiles/' + hostname + "-" + now.strftime("%Y%m%d"), "w")
+				saveoutput = open(backupPath + hostname + "-" + now.strftime("%Y%m%d"), "w")
 			vlanStore = vlanSplice.findall(vlan)
 			for item in vlanStore:
 				numberName = item.split()
@@ -130,5 +153,6 @@ def inlineCSwitch(stuff):
 
 ciscoRun(novlan)
 inlineCSwitch(vlan)
+asaRun(asa)
 #ciscoSwitch(vlan)
 
