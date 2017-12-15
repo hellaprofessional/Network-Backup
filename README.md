@@ -1,6 +1,8 @@
 # Network-Backup
 This is a script to login to network devices, pull the configuration, and backup.  This is running off Python 3.6 and Netmiko. 
 
+( Note, This branch is to introduce a change in how I'm working with credentials.  The plan will be to use an encrypted CSV file for the device info.  This should make data a little more secure, and a little easier to manage ) 
+
 Warning that a lot of this is me learning to code, while working on a project. This uses the Netmiko library to handle SSH connections between network devices. ( https://github.com/ktbyers/netmiko )  There other projects that are way more featured than this, such as Rancid. But this helps me solve two problems. 
 
 - The person asking me for this doesn't want to dedicate a linux server to this cause, and will likely piggyback on some windows machine they have.  
